@@ -1,0 +1,506 @@
+{
+  "name": "SemanticModel",
+  "compatibilityLevel": 1600,
+  "model": {
+    "culture": "en-US",
+    "dataSources": [
+      {
+        "type": "structured",
+        "name": "SQL/EGG-LAPTOP;DW_Customer_Segmentation",
+        "connectionDetails": {
+          "protocol": "tds",
+          "address": {
+            "server": "EGG-LAPTOP",
+            "database": "DW_Customer_Segmentation"
+          },
+          "authentication": null,
+          "query": null
+        },
+        "credential": {
+          "AuthenticationKind": "Windows",
+          "kind": "SQL",
+          "path": "egg-laptop;DW_Customer_Segmentation",
+          "Username": "EGG-LAPTOP\\Egg",
+          "EncryptConnection": false
+        }
+      }
+    ],
+    "tables": [
+      {
+        "name": "DimDate",
+        "columns": [
+          {
+            "name": "DateKey",
+            "dataType": "int64",
+            "sourceColumn": "DateKey"
+          },
+          {
+            "name": "FullDate",
+            "dataType": "dateTime",
+            "sourceColumn": "FullDate"
+          },
+          {
+            "name": "Year",
+            "dataType": "int64",
+            "sourceColumn": "Year"
+          },
+          {
+            "name": "Quarter",
+            "dataType": "int64",
+            "sourceColumn": "Quarter"
+          },
+          {
+            "name": "Month",
+            "dataType": "int64",
+            "sourceColumn": "Month"
+          },
+          {
+            "name": "MonthName",
+            "dataType": "string",
+            "sourceColumn": "MonthName"
+          },
+          {
+            "name": "DayOfMonth",
+            "dataType": "int64",
+            "sourceColumn": "DayOfMonth"
+          },
+          {
+            "name": "DayOfWeek",
+            "dataType": "int64",
+            "sourceColumn": "DayOfWeek"
+          },
+          {
+            "name": "DayOfWeekName",
+            "dataType": "string",
+            "sourceColumn": "DayOfWeekName"
+          },
+          {
+            "name": "IsWeekend",
+            "dataType": "boolean",
+            "sourceColumn": "IsWeekend"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Partition",
+            "dataView": "full",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = #\"SQL/EGG-LAPTOP;DW_Customer_Segmentation\",",
+                "    dbo_DimDate = Source{[Schema=\"dbo\",Item=\"DimDate\"]}[Data]",
+                "in",
+                "    dbo_DimDate"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DimCustomer",
+        "columns": [
+          {
+            "name": "CustomerKey",
+            "dataType": "int64",
+            "sourceColumn": "CustomerKey"
+          },
+          {
+            "name": "PersonID",
+            "dataType": "int64",
+            "sourceColumn": "PersonID"
+          },
+          {
+            "name": "CustomerID",
+            "dataType": "int64",
+            "sourceColumn": "CustomerID"
+          },
+          {
+            "name": "FirstName",
+            "dataType": "string",
+            "sourceColumn": "FirstName"
+          },
+          {
+            "name": "LastName",
+            "dataType": "string",
+            "sourceColumn": "LastName"
+          },
+          {
+            "name": "FullName",
+            "dataType": "string",
+            "sourceColumn": "FullName"
+          },
+          {
+            "name": "EmailPromotion",
+            "dataType": "int64",
+            "sourceColumn": "EmailPromotion"
+          },
+          {
+            "name": "Gender",
+            "dataType": "string",
+            "sourceColumn": "Gender"
+          },
+          {
+            "type": "calculated",
+            "name": "LifetimeSpend",
+            "dataType": "decimal",
+            "isDataTypeInferred": true,
+            "expression": " CALCULATE(SUM(FactSales[TotalLineAmount]))",
+            "formatString": "\"XDR\"#,0.00;-\"XDR\"#,0.00;\"XDR\"#,0.00",
+            "annotations": [
+              {
+                "name": "Format",
+                "value": "<Format Format=\"Currency\" Accuracy=\"2\" ThousandSeparator=\"True\"><Currency LCID=\"8192\" DisplayName=\"XDR English (World)\" Symbol=\"XDR\" PositivePattern=\"0\" NegativePattern=\"1\" /></Format>"
+              }
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "SpendingSegment",
+            "dataType": "string",
+            "isDataTypeInferred": true,
+            "expression": " SWITCH( TRUE(), [LifetimeSpend] >= 5000, \"Gold\", [LifetimeSpend] >= 1000, \"Silver\", [LifetimeSpend] > 0, \"Bronze\", \"Inactive\" )"
+          },
+          {
+            "type": "calculated",
+            "name": "NextBestAction",
+            "dataType": "string",
+            "isDataTypeInferred": true,
+            "expression": [
+              " SWITCH(",
+              "    TRUE(),",
+              "    ",
+              "    // 1. BAD ACTOR: Low spender but returns a lot (Profit killer)",
+              "    [LifetimeProfit] < 0, ",
+              "    \"⚠️ Flag: Negative Value (High Returns)\",",
+              "",
+              "    // 2. THE VIP: Already at the top",
+              "    [SpendingSegment] == \"Gold\", ",
+              "    \"💎 Reward: Send 'Exclusive 2025 Catalog'\",",
+              "",
+              "    // 3. THE CLIMBER: Silver customer close to Gold",
+              "    // (Assuming Gold starts at 5000, and they are above 3500)",
+              "    [SpendingSegment] == \"Silver\" && [LifetimeSpend] >= 3500, ",
+              "    \"⭐ Upsell: 'Spend bit more to hit Gold Status'\",",
+              "",
+              "    // 4. THE CORE: Standard Silver customer",
+              "    [SpendingSegment] == \"Silver\", ",
+              "    \"✉️ Cross-sell: Recommend Premium Add-ons\",",
+              "",
+              "    // 5. THE NEWBIE: Bronze customer (Low spend)",
+              "    [SpendingSegment] == \"Bronze\", ",
+              "    \"🏷️ Bundle Offer: 'Buy 2 Get 10% Off'\",",
+              "",
+              "    // Default",
+              "    \"Standard Marketing\"",
+              ")"
+            ]
+          },
+          {
+            "type": "calculated",
+            "name": "LifetimeProfit",
+            "dataType": "decimal",
+            "isDataTypeInferred": true,
+            "expression": "CALCULATE([Total Profit])",
+            "formatString": "\"XDR\"#,0.00;-\"XDR\"#,0.00;\"XDR\"#,0.00",
+            "annotations": [
+              {
+                "name": "Format",
+                "value": "<Format Format=\"Currency\" Accuracy=\"2\" ThousandSeparator=\"True\"><Currency LCID=\"8192\" DisplayName=\"XDR English (World)\" Symbol=\"XDR\" PositivePattern=\"0\" NegativePattern=\"1\" /></Format>"
+              }
+            ]
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Partition",
+            "dataView": "full",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = #\"SQL/EGG-LAPTOP;DW_Customer_Segmentation\",",
+                "    dbo_DimCustomer = Source{[Schema=\"dbo\",Item=\"DimCustomer\"]}[Data]",
+                "in",
+                "    dbo_DimCustomer"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DimGeography",
+        "columns": [
+          {
+            "name": "GeographyKey",
+            "dataType": "int64",
+            "sourceColumn": "GeographyKey"
+          },
+          {
+            "name": "AddressID",
+            "dataType": "int64",
+            "sourceColumn": "AddressID"
+          },
+          {
+            "name": "City",
+            "dataType": "string",
+            "sourceColumn": "City"
+          },
+          {
+            "name": "StateProvinceName",
+            "dataType": "string",
+            "sourceColumn": "StateProvinceName"
+          },
+          {
+            "name": "CountryRegionName",
+            "dataType": "string",
+            "sourceColumn": "CountryRegionName"
+          },
+          {
+            "name": "PostalCode",
+            "dataType": "string",
+            "sourceColumn": "PostalCode"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Partition",
+            "dataView": "full",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = #\"SQL/EGG-LAPTOP;DW_Customer_Segmentation\",",
+                "    dbo_DimGeography = Source{[Schema=\"dbo\",Item=\"DimGeography\"]}[Data]",
+                "in",
+                "    dbo_DimGeography"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "DimProduct",
+        "columns": [
+          {
+            "name": "ProductKey",
+            "dataType": "int64",
+            "sourceColumn": "ProductKey"
+          },
+          {
+            "name": "ProductID",
+            "dataType": "int64",
+            "sourceColumn": "ProductID"
+          },
+          {
+            "name": "ProductName",
+            "dataType": "string",
+            "sourceColumn": "ProductName"
+          },
+          {
+            "name": "Color",
+            "dataType": "string",
+            "sourceColumn": "Color"
+          },
+          {
+            "name": "StandardCost",
+            "dataType": "decimal",
+            "sourceColumn": "StandardCost"
+          },
+          {
+            "name": "ListPrice",
+            "dataType": "decimal",
+            "sourceColumn": "ListPrice"
+          },
+          {
+            "name": "SubCategoryName",
+            "dataType": "string",
+            "sourceColumn": "SubCategoryName"
+          },
+          {
+            "name": "CategoryName",
+            "dataType": "string",
+            "sourceColumn": "CategoryName"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Partition",
+            "dataView": "full",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = #\"SQL/EGG-LAPTOP;DW_Customer_Segmentation\",",
+                "    dbo_DimProduct = Source{[Schema=\"dbo\",Item=\"DimProduct\"]}[Data]",
+                "in",
+                "    dbo_DimProduct"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "name": "FactSales",
+        "columns": [
+          {
+            "name": "FactSalesKey",
+            "dataType": "int64",
+            "sourceColumn": "FactSalesKey"
+          },
+          {
+            "name": "ProductKey",
+            "dataType": "int64",
+            "sourceColumn": "ProductKey"
+          },
+          {
+            "name": "CustomerKey",
+            "dataType": "int64",
+            "sourceColumn": "CustomerKey"
+          },
+          {
+            "name": "GeographyKey",
+            "dataType": "int64",
+            "sourceColumn": "GeographyKey"
+          },
+          {
+            "name": "OrderDateKey",
+            "dataType": "int64",
+            "sourceColumn": "OrderDateKey"
+          },
+          {
+            "name": "SalesOrderNumber",
+            "dataType": "string",
+            "sourceColumn": "SalesOrderNumber"
+          },
+          {
+            "name": "OrderQuantity",
+            "dataType": "int64",
+            "sourceColumn": "OrderQuantity"
+          },
+          {
+            "name": "UnitPrice",
+            "dataType": "decimal",
+            "sourceColumn": "UnitPrice"
+          },
+          {
+            "name": "TotalLineAmount",
+            "dataType": "decimal",
+            "sourceColumn": "TotalLineAmount"
+          },
+          {
+            "name": "TaxAmt",
+            "dataType": "decimal",
+            "sourceColumn": "TaxAmt"
+          },
+          {
+            "name": "Freight",
+            "dataType": "decimal",
+            "sourceColumn": "Freight"
+          },
+          {
+            "name": "TotalProductCost",
+            "dataType": "decimal",
+            "sourceColumn": "TotalProductCost"
+          },
+          {
+            "name": "OrderStatus",
+            "dataType": "int64",
+            "sourceColumn": "OrderStatus"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "Partition",
+            "dataView": "full",
+            "source": {
+              "type": "m",
+              "expression": [
+                "let",
+                "    Source = #\"SQL/EGG-LAPTOP;DW_Customer_Segmentation\",",
+                "    dbo_FactSales = Source{[Schema=\"dbo\",Item=\"FactSales\"]}[Data]",
+                "in",
+                "    dbo_FactSales"
+              ]
+            }
+          }
+        ],
+        "measures": [
+          {
+            "name": "Total Revenue",
+            "expression": " SUM(FactSales[TotalLineAmount])"
+          },
+          {
+            "name": "Total Cost",
+            "expression": " SUM(FactSales[TotalProductCost])"
+          },
+          {
+            "name": "Total Profit",
+            "expression": " [Total Revenue] - [Total Cost]"
+          },
+          {
+            "name": "Total Orders",
+            "expression": " DISTINCTCOUNT(FactSales[SalesOrderNumber])"
+          },
+          {
+            "name": "Total Customers",
+            "expression": " DISTINCTCOUNT(FactSales[CustomerKey])"
+          },
+          {
+            "name": "Avg Rev Per Order",
+            "expression": " DIVIDE([Total Revenue], [Total Orders])"
+          },
+          {
+            "name": "Profit Per Customer",
+            "expression": " DIVIDE([Total Profit], [Total Customers])"
+          },
+          {
+            "name": "Return Amount",
+            "expression": " CALCULATE([Total Revenue], FactSales[OrderStatus] = 6)"
+          },
+          {
+            "name": "Return Rate %",
+            "expression": " DIVIDE([Return Amount], [Total Revenue], 0)"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "name": "cea532ea-33dc-4a5e-afa9-64cd3d386e5d",
+        "fromTable": "FactSales",
+        "fromColumn": "OrderDateKey",
+        "toTable": "DimDate",
+        "toColumn": "DateKey"
+      },
+      {
+        "name": "4e86806e-76ad-40a8-b75d-bccb0905c73b",
+        "fromTable": "FactSales",
+        "fromColumn": "CustomerKey",
+        "toTable": "DimCustomer",
+        "toColumn": "CustomerKey"
+      },
+      {
+        "name": "27548bf8-b252-4a48-a020-56e5ef4dc5d9",
+        "fromTable": "FactSales",
+        "fromColumn": "GeographyKey",
+        "toTable": "DimGeography",
+        "toColumn": "GeographyKey"
+      },
+      {
+        "name": "67fccdb6-5277-4659-a6e1-2bc28d484351",
+        "fromTable": "FactSales",
+        "fromColumn": "ProductKey",
+        "toTable": "DimProduct",
+        "toColumn": "ProductKey"
+      }
+    ],
+    "annotations": [
+      {
+        "name": "ClientCompatibilityLevel",
+        "value": "700"
+      }
+    ]
+  },
+  "id": "SemanticModel"
+}

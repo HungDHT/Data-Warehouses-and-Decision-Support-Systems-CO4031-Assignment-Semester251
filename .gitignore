@@ -1,0 +1,17 @@
+# Ignore Visual Studio temporary files
+.vs/
+bin/
+obj/
+*.user
+*.suo
+
+# Ignore SSAS backup/log files
+*.db
+*.log
+*.abf
+
+# Ignore Power BI recovery files
+*.pbix.rbe
+
+# Ignore sensitive connection info
+*.conmgr
