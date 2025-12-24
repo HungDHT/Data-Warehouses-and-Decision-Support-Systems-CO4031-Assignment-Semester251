@@ -3,7 +3,7 @@ This project is a full-stack **Decision Support System (DSS)** designed to trans
 
 ### 🏗️ Architecture & Tech Stack
 * **Database (SQL Server):** Designed a Star Schema Data Warehouse (`FactSales`, `DimCustomer`, etc.) optimized for analytical queries.
-* **ETL (SSIS):** Developed robust packages to extract, clean, and load data, featuring derived logic for Gender and Total Cost.
+* **ETL (SSIS):** Developed robust packages to extract, clean, and load data.
 * **Semantic Layer (SSAS Tabular):** Built a centralized logic model using DAX to calculate KPIs (Profit, Margins) and implement row-level segmentation.
 * **Visualization (Power BI):** Created an interactive dashboard connected "Live" to SSAS, featuring "What-If" analysis and tactical customer lists.
 
