@@ -1,4 +1,4 @@
-<img width="472" height="475" alt="image" src="https://github.com/user-attachments/assets/bf5f0132-7fc9-46de-88cd-7c27212fbd12" />### 🚀 Overview
+### 🚀 Overview
 This project is an end-to-end **Decision Support System (DSS)** that transforms raw transactional data from the AdventureWorks database into actionable marketing intelligence. Unlike traditional reports that only show historical sales, this system implements a prescriptive **"Action Engine"** that automatically classifies customers and recommends specific next steps (e.g., Upsell, Churn Prevention, or Risk Flagging).
 
 ---
