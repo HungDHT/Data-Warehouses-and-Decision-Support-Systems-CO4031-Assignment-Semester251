@@ -59,22 +59,22 @@ The "Command Center" allows marketing managers to filter the entire customer bas
 AdventureWorks-DSS-Analytics/
 │
 ├── Database/                        # SQL Scripts for Star Schema Generation
-│   └── DW_Schema.sql
+│   └── script.ipynd
 │
 ├── SSIS_ETL/                        # ETL Packages (Data Integration)
-│   ├── AdventureWorks_ETL.sln
+│   ├── CUSTOMERSEGMENTATION.sln
 │   └── Package.dtsx
 │
 ├── SSAS_Model/                      # Semantic Layer & DAX Logic
 │   ├── Model.bim
-│   └── AdventureWorks_Analysis.sln
+│   └── DSS_CUSTOMER_FINAL.sln
 │
 ├── PowerBI_Report/                  # Interactive Dashboard Source
-│   └── Segmentation_Dashboard.pbix
+│   └── CUSTOMERSEGMENTATIONFINAL.pbix
 │
 ├── assets/                          # Project Screenshots & Diagrams
 │   ├── architecture_diagram.png
 │   └── dashboard_screenshot.png
 │
-├── Project_Report.pdf               # Full PDF Documentation & Design
+├── Assignment_Report.pdf               # Full PDF Documentation
 └── README.md                        # Project Overview
